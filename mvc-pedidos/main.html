@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>SPA Pedidos - Desafio Final XPe</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <style>
+    body { font-family: sans-serif; padding: 2em; background: #f9f9f9; }
+    input, select, button { margin: 0.5em; padding: 0.4em; }
+    .card { padding: 1em; margin: 1em 0; background: #fff; border: 1px solid #ccc; }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <h1>SPA Pedidos - Desafio Final XPe</h1>
+    <hr/>
+    <form @submit.prevent="criarPedido">
+      <h3>Criar novo pedido</h3>
+      <input v-model="novoPedido.id_carrinho" placeholder="ID Carrinho" required>
+      <input v-model.number="novoPedido.id_usuario" type="number" placeholder="ID Usuário" required>
+      <input v-model.number="novoPedido.id_produto" type="number" placeholder="ID Produto" required>
+      <input v-model.number="novoPedido.qdt" type="number" placeholder="Quantidade" required>
+      <button type="submit">Criar Pedido</button>
+    </form>
+    <hr/>
+    <h3>Pedidos cadastrados</h3>
+    <span>Filtrar por ID do Carrinho:</span>
+    <input v-model="carrinho" type="number" placeholder="ID do Carrinho">
+    <button @click="listarPedidos()">Filtrar Carrinho</button>
+    <button @click="limparFiltros()">Limpar Filtros</button>
+    <div v-for="p in pedidos" :key="p.id" class="card">
+      <div><strong>ID:</strong> {{ p.id }}</div>
+      <div><strong>Carrinho:</strong> {{ p.id_carrinho }}</div>
+      <div><strong>Usuário:</strong> {{ p.id_usuario }}</div>
+      <div><strong>Produto:</strong> {{ p.id_produto }}</div>
+      <div><strong>Quantidade:</strong> {{ p.qdt }}</div>
+      <button @click="deletarPedido(p.id)">🗑️ Excluir</button>
+    </div>
+    <hr/>
+  </div>
+
+  <script>
+    const { createApp } = Vue;
+    createApp({
+      data() {
+        return {
+          carrinho:null,
+          pedidos: [],
+          novoPedido: {
+            id_carrinho: '',
+            id_usuario: null,
+            id_produto: null,
+            qdt: null
+          }
+        };
+      },
+      methods: {
+        listarPedidos() {
+          if (this.carrinho){
+            axios.get(`http://localhost:8080/api/pedidos/carrinho/${this.carrinho}`)
+              .then(res => this.pedidos = res.data)
+              .catch(err => alert('Erro ao listar pedidos')); 
+          }else{
+            axios.get('http://localhost:8080/api/pedidos')
+              .then(res => this.pedidos = res.data)
+              .catch(err => alert('Erro ao listar pedidos')); 
+          }
+        },
+        criarPedido() {
+          axios.post('http://localhost:8080/api/pedidos', this.novoPedido)
+            .then(() => {
+              this.listarPedidos();
+              this.novoPedido = { id_carrinho: '', id_usuario: null, id_produto: null, qdt: null };
+            })
+            .catch(err => alert('Erro ao criar pedido'));
+        },
+        deletarPedido(id) {
+          axios.delete(`http://localhost:8080/api/pedidos/${id}`)
+            .then(() => this.listarPedidos())
+            .catch(err => alert('Erro ao excluir'));
+        },
+        limparFiltros() {
+          this.carrinho = null;
+          this.listarPedidos();
+        }
+      },
+      mounted() {
+        this.listarPedidos();
+      }
+    }).mount('#app');
+  </script>
+</body>
+</html>
